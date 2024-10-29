@@ -1,0 +1,457 @@
+;  IRL FlowCode Version: Version 10.0
+;  c1995-2015: Visual Flow Coder by 2LResearch
+;
+;  File Name : RoboCleaner.py.vfc
+;  File Date : 04:20:25 PM - 26:Oct:2024
+
+event( import pygame );// 
+event( import cv2 );// 
+event( import numpy as np );// 
+event( import math );// 
+event( import random );// 
+event(import threading );//// //////
+event(import queue );//// //////
+event(import serial );//// //////
+event(import re );//// //////
+event(import time);//// //////
+end();//////
+
+input( class CircuitBoard3D(): );// 
+branch(  );//
+path(  );//
+
+input( def __init__(self) : );// 
+branch(  );//
+path(  );//
+set( self.width = 800 );// 
+set( self.height = 600 );// 
+set( self.screen = pygame.display.set_mode((self.width, self.height)) );// 
+process( pygame.display.set_caption('3D Circuit Cleaner') );// 
+set( self.board_size = 4 );// 
+set( self.board = [[False for _ in range(self.board_size)] for _ in range(self.board_size)] );// 
+set( self.player_pos = [0, 0] );// 
+set( self.score = 0 );// # Set default view angles for more intuitive controls
+set( self.DEFAULT_ROT_X = 30 );// inline Less steep angle
+set();//
+set( self.DEFAULT_ROT_Y = 45 );// inline 45 degrees for isometric
+set();//
+set( self.DEFAULT_ROT_Z = 0 );// 
+set( self.DEFAULT_SCALE = 50 );// 
+path();//////
+set();//# Initialize with default values
+set( self.rotation_x = self.DEFAULT_ROT_X );// 
+set( self.rotation_y = self.DEFAULT_ROT_Y );// 
+set( self.rotation_z = self.DEFAULT_ROT_Z );// 
+set( self.scale = self.DEFAULT_SCALE );// 
+set( self.min_scale = 20 );// 
+set( self.max_scale = 100 );// 
+set( self.center_x = self.width // 2 );// 
+set( self.center_y = self.height // 2 );// 
+set();//
+set( self.dragging = False );// 
+set( self.last_mouse_pos = None );// 
+path();//////
+set();//# Colors (in BGR for OpenCV)
+set( self.CYAN = (255, 255, 0) );// 
+set( self.DARK_CYAN = (139, 139, 0) );// 
+set( self.RED = (0, 0, 255) );// 
+set( self.DARK_RED = (0, 0, 180) );// 
+set( self.GREEN = (0, 255, 0) );// 
+set( self.BLUE = (255, 0, 0) );// 
+set( self.WHITE = (255, 255, 255) );// 
+set( self.BLACK = (0, 0, 0) );// 
+set( self.GRID_COLOR = (100, 100, 100) );// 
+path();//
+generic(self.command_queue = queue.Queue() );// ////
+bend(  );// # end if __init__
+end(  );// end def __init__
+
+input( def reset_view(self) : );// #Reset camera to default position
+branch(  );//
+path(  );//
+set( self.rotation_x = self.DEFAULT_ROT_X );// 
+set( self.rotation_y = self.DEFAULT_ROT_Y );// 
+set( self.rotation_z = self.DEFAULT_ROT_Z );// 
+set( self.scale = self.DEFAULT_SCALE );// 
+bend(  );// # end if reset_view
+end(  );// end def reset_view
+
+input( def rotate_point(self, point) : );// 
+branch(  );//
+path(  );//
+set( rx = math.radians(self.rotation_x) );// 
+set( ry = math.radians(self.rotation_y) );// 
+set( rz = math.radians(self.rotation_z) );// 
+set( Rx = np.array([[1, 0, 0], [0, math.cos(rx), -math.sin(rx)], [0, math.sin(rx), math.cos(rx)]]) );// 
+set();//
+set( Ry = np.array([[math.cos(ry), 0, math.sin(ry)], [0, 1, 0], [-math.sin(ry), 0, math.cos(ry)]]) );// 
+set();//
+set();//
+set();//
+set();//
+set();//
+set( Rz = np.array([[math.cos(rz), -math.sin(rz), 0], [math.sin(rz), math.cos(rz), 0], [0, 0, 1]]) );// 
+set();//
+set();//
+set();//
+set();//
+set();//
+set( point = np.dot(Rx, point) );// 
+set( point = np.dot(Ry, point) );// 
+set( point = np.dot(Rz, point) );// 
+set();//
+set( x = point[0] * self.scale + self.center_x );// 
+set( y = point[1] * self.scale + self.center_y );// 
+set();//
+end( return (int(x), int(y)) );// 
+bend(  );// # end if rotate_point
+end(  );// end def rotate_point
+
+input( def draw_cylinder(self, img, base_center, height, color, border_color) : );// # Get the current view angle to determine ellipse ratio
+branch(  );//
+path(  );//
+set( view_angle = math.radians(self.rotation_x) );// # Calculate ellipse dimensions based on zoom level
+set( radius = max(5, int(12 * self.scale / 50)) );// 
+set( squash = abs(math.cos(view_angle)) );// 
+set();//
+set();//# Increased height for the cylinder
+set( height_scale = height * self.scale / 50 * 1.5 );// inline Increased height factor
+set();//
+set();//
+set();//# Calculate top center with increased height
+set( top_center = (base_center[0], base_center[1] - int(height_scale)) );// 
+set();//
+set();//# Draw the sides of the cylinder
+set( points = np.array([[base_center[0] - radius, base_center[1]], [base_center[0] + radius, base_center[1]], [top_center[0] + radius, top_center[1]], [top_center[0] - radius, top_center[1]]], np.int32) );// 
+set();//
+set();//
+set();//
+set();//
+set();//
+process( cv2.fillPoly(img, [points], color) );// 
+process( cv2.polylines(img, [points], True, border_color) );// 
+set();//
+set();//# Draw bottom ellipse
+process( cv2.ellipse(img, base_center, (radius, int(radius * squash)), 0, 0, 360, color, -1) );// 
+set();//
+process( cv2.ellipse(img, base_center, (radius, int(radius * squash)), 0, 0, 360, border_color, 1) );// 
+set();//
+set();//
+set();//# Draw top ellipse
+process( cv2.ellipse(img, top_center, (radius, int(radius * squash)), 0, 0, 360, color, -1) );// 
+set();//
+process( cv2.ellipse(img, top_center, (radius, int(radius * squash)), 0, 0, 360, border_color, 1) );// 
+bend(  );// # end if draw_cylinder
+end(  );// end def draw_cylinder
+
+input( def draw_coordinate_axes(self, img) : );// 
+branch(  );//
+path(  );//
+set( origin = np.array([-self.board_size, -self.board_size, 0]) );// 
+set( origin_2d = self.rotate_point(origin) );// 
+set( axis_length = 1.0 );// 
+loop( for (axis, color, label) in [(np.array([axis_length, 0, 0]), self.RED, 'X'), (np.array([0, axis_length, 0]), self.GREEN, 'Y'), (np.array([0, 0, axis_length]), self.BLUE, 'Z')]: );// 
+set();//
+set();//
+set();//
+set();//
+set( end_point = self.rotate_point(origin + axis) );// 
+process( cv2.arrowedLine(img, origin_2d, end_point, color, 2, tipLength=0.3));// 
+set();//
+set();//# Add label with offset
+set( dx = end_point[0] - origin_2d[0] );// 
+set( dy = end_point[1] - origin_2d[1] );// 
+set( length = math.sqrt(dx * dx + dy * dy) );// 
+branch( if length > 0: );// 
+path(  );//
+set( label_x = int(end_point[0] + (dx / length) * 10));// 
+set( label_y = int(end_point[1] + (dy / length) * 10));// 
+process( cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2) );// 
+bend(  );//
+lend(  );//
+bend(  );// # end if draw_coordinate_axes
+end(  );// end def draw_coordinate_axes
+
+input( def draw_board(self) : );// # Draw grid and pieces
+branch(  );//
+path(  );//
+set( img = np.zeros((self.height, self.width, 3), dtype=np.uint8) );// 
+loop( for i in range(self.board_size + 1): );// 
+loop( for j in range(self.board_size + 1): );// 
+set( x = (i - self.board_size / 2) * 2 );// 
+set( y = (j - self.board_size / 2) * 2 );// # Calculate center of each square for pieces
+set( point = np.array([x, y, 0]) );// 
+branch( if i < self.board_size and j < self.board_size: );// 
+path(  );//
+set( center_x = x + 1 );// 
+set( center_y = y + 1 );// 
+set( center = self.rotate_point(np.array([center_x, center_y, 0])) );// # Draw player cylinder with increased height
+branch( if [i, j] == self.player_pos: );// 
+path(  );//
+process( self.draw_cylinder(img, center, 1.0, self.RED, self.DARK_RED) );// 
+path( else: );// # Draw circuit node
+branch( if not self.board[i][j]: );// 
+path(  );//
+set( node_radius = max(5, int(15 * self.scale / 50)) );// 
+process( cv2.circle(img, center, node_radius, self.CYAN, -1) );// 
+process( cv2.circle(img, center, node_radius, self.BLACK, 1) );// # Draw grid lines
+bend(  );//
+bend(  );//
+bend(  );//
+lend(  );//
+lend(  );//
+set( points = [] );// 
+loop( for i in range(self.board_size + 1): );// 
+loop( for j in range(self.board_size + 1): );// 
+set( x = (i - self.board_size / 2) * 2 );// 
+set( y = (j - self.board_size / 2) * 2 );// 
+process( points.append(np.array([x, y, 0])) );// 
+lend(  );//
+lend(  );//
+loop( for i in range(self.board_size + 1): );// 
+set( p1 = self.rotate_point(points[i * (self.board_size + 1)]) );// 
+set( p2 = self.rotate_point(points[i * (self.board_size + 1) + self.board_size]) );// 
+process( cv2.line(img, p1, p2, self.GRID_COLOR, 1) );// # Draw coordinate axes
+set( p1 = self.rotate_point(points[i]) );// 
+set( p2 = self.rotate_point(points[i + (self.board_size + 1) * self.board_size]) );// 
+process( cv2.line(img, p1, p2, self.GRID_COLOR, 1) );// # Updated instructions to include spacebar
+lend(  );//
+process( self.draw_coordinate_axes(img) );// 
+set( font = cv2.FONT_HERSHEY_SIMPLEX );// 
+process( cv2.putText(img, f'Score: {self.score}', (20, 30), font, 1, self.WHITE, 2) );// 
+process( cv2.putText(img, 'Arrow Keys: Move | Mouse: Rotate | Scroll: Zoom | Space: Reset View | ESC: Quit', (20, self.height - 20), font, 0.5, self.WHITE, 1) );// 
+set();//# Convert to Pygame surface
+set( img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) );// 
+set( surface = pygame.surfarray.make_surface(img.swapaxes(0, 1)) );// 
+end( return surface );// 
+bend(  );// # end if draw_board
+end(  );// end def draw_board
+
+input( def handle_mouse(self, event) : );// 
+branch(  );//
+path(  );//
+branch( if event.type == pygame.MOUSEBUTTONDOWN: );// 
+path(  );//
+branch( if event.button == 1: );// 
+path(  );//
+set( self.dragging = True );// inline Mouse wheel down
+set( self.last_mouse_pos = pygame.mouse.get_pos() );// 
+path( else: );// 
+branch( if event.button == 4: );// 
+path(  );//
+set( self.scale = min(self.max_scale, self.scale * 1.1) );// 
+path( else: );// 
+branch( if event.button == 5: );// 
+path(  );//
+set( self.scale = max(self.min_scale, self.scale / 1.1) );// 
+bend(  );//
+bend(  );//
+bend(  );//
+path( else: );// 
+branch( if event.type == pygame.MOUSEBUTTONUP: );// 
+path(  );//
+branch( if event.button == 1: );// 
+path(  );//
+set( self.dragging = False );// 
+bend(  );//
+path( else: );// 
+branch( if event.type == pygame.MOUSEMOTION and self.dragging: );// 
+path(  );//
+branch( if self.last_mouse_pos: );// 
+path(  );//
+set( current_pos = pygame.mouse.get_pos() );// 
+set( dx = current_pos[0] - self.last_mouse_pos[0] );// 
+set( dy = current_pos[1] - self.last_mouse_pos[1] );// 
+set( self.rotation_y += dx * 0.5);// 
+set( self.rotation_x += dy * 0.5);// 
+set( self.rotation_x = max(-89, min(89, self.rotation_x)) );// 
+set( self.last_mouse_pos = current_pos );// 
+bend(  );//
+bend(  );//
+bend(  );//
+bend(  );//
+bend(  );// # end if handle_mouse
+end(  );// end def handle_mouse
+
+input( def move_player(self, dx, dy) : );// 
+branch(  );//
+path(  );//
+set( new_x = self.player_pos[0] + dx );// 
+set( new_y = self.player_pos[1] + dy );// 
+branch( if 0 <= new_x < self.board_size and 0 <= new_y < self.board_size: );// 
+path(  );//
+set( self.player_pos = [new_x, new_y] );// 
+branch( if not self.board[new_x][new_y]: );// 
+path(  );//
+set( self.board[new_x][new_y] = True );// 
+set( self.score += 10);// inline Changed to move up (negative y)
+branch( if random.random() < 0.2: );// 
+path(  );//
+set( corrupt_x = random.randint(0, self.board_size - 1) );// inline Changed to move down (positive y)
+set( corrupt_y = random.randint(0, self.board_size - 1) );// 
+branch( if self.board[corrupt_x][corrupt_y]: );// 
+path(  );//
+set( self.board[corrupt_x][corrupt_y] = False );// 
+bend(  );//
+bend(  );//
+bend(  );//
+bend(  );//
+bend(  );// # end if move_player
+end(  );// end def move_player
+
+input(def run(self): );// ////
+generic(clock = pygame.time.Clock() );// ////
+generic(running = True );// ////
+loop(while running: );// ////
+generic();// // Process any pending serial commands //
+branch(try: );//// //////
+path();//
+loop(while not self.command_queue.empty(): );// ////
+generic(command = self.command_queue.get_nowait() );// ////
+generic(self.process_serial_command(command) );// ////
+lend();//
+path(except queue.Empty: );//// //////
+generic(pass );// ////
+bend();//
+generic();// // Regular game event handling //
+loop(for event in pygame.event.get(): );// ////
+branch(if event.type == pygame.QUIT: );// ////
+path();//
+set(running = False );//// //////
+path(elif event.type == pygame.KEYDOWN: );//// //////
+branch(if event.key == pygame.K_ESCAPE: );//// //////
+path();//
+generic(running = False );// ////
+path(elif event.key == pygame.K_SPACE: );//// //////
+set(self.reset_view() );//// //////
+path(elif event.key == pygame.K_UP: );//// //////
+set(self.move_player(0, -1) );//// //////
+path(elif event.key == pygame.K_DOWN: );//// //////
+set(self.move_player(0, 1) );//// //////
+path(elif event.key == pygame.K_LEFT: );//// //////
+set(self.move_player(-1, 0) );//// //////
+path(elif event.key == pygame.K_RIGHT: );//// //////
+set(self.move_player(1, 0) );//// //////
+bend();//
+path(else: );//// //////
+generic(self.handle_mouse(event) );// ////
+bend();//
+lend();//
+generic(surface = self.draw_board() );// ////
+generic(self.screen.blit(surface, (0, 0)) );// ////
+generic(pygame.display.flip() );// ////
+generic(clock.tick(60) );// ////
+lend();//
+generic(pygame.quit());// ////
+end();//
+
+input(def move_to_location(self, x, y):);// ////
+branch(if 0 <= x < self.board_size and 0 <= y < self.board_size: );//// //////
+path();//
+generic(self.player_pos = [x, y] );// ////
+branch(if not self.board[x][y]: );////// ////////
+path();//
+generic(self.board[x][y] = True );// ////
+generic(self.score += 10 );// ////
+generic();// // Random corruption chance //
+branch(if random.random() < 0.2: );// ////
+path();//
+set(corrupt_x = random.randint(0, self.board_size-1) );//// //////
+generic(corrupt_y = random.randint(0, self.board_size-1) );// ////
+branch(if self.board[corrupt_x][corrupt_y]: );// ////
+path();//
+set(self.board[corrupt_x][corrupt_y] = False);//// //////
+bend();//
+bend();//
+bend();//
+end(return True );// ////
+bend();//
+end(return False);// ////
+
+input(def process_serial_command(self, command): );// ////
+generic();//Handle commands received from serial monitor"""
+branch(try: );//// //////
+path();//
+generic();// // Example command processing - modify based on your needs //
+branch(if command.startswith(b'UP'): );// ////
+path();//
+set(self.move_player(0, -1));//// //////
+path(elif command.startswith(b'DOWN'):);//// //////
+set(self.move_player(0, 1) );//// //////
+path(elif command.startswith(b'LEFT'): );//// //////
+set(self.move_player(-1, 0) );//// //////
+path(elif command.startswith(b'RIGHT'): );//// //////
+set(self.move_player(1, 0) );//// //////
+bend(  );//
+path(except Exception as e: );//// //////
+output(print(f"Error processing command: {e}"));//// //////
+bend(  );//
+end(  );// class CircuitBoard3D
+bend();//
+end();//
+
+input(def serial_monitor(game): );// ////
+generic(COM = 'COM8' );// ////
+generic(BAUD = 9600 );// ////
+loop(while True: );// ////
+branch(try: );//// //////
+path();//
+generic(ser = serial.Serial(COM, BAUD) );// ////
+generic(ser.flushInput());//
+loop(while True: );// ////
+branch(try: );//// //////
+path();//
+generic( ser_bytes = str( ser.readline() ));//ser_bytes =  ser.readline()
+branch(if ser_bytes: );// ////
+path();//
+generic(position_code  = ser_bytes.replace('\\', '').replace('r', '').replace( 'b', '').replace( 'n', '' ).replace( ',', '' ).replace( '\'', '' ));//
+branch(try: );//// //////
+path();//
+set(p = int( position_code ));//
+set(x = p % 4;);//
+set(y = int( p  / 4););//
+output(print(f"Position code: {position_code} x,y:  {x} , {y} "  ));// 
+process(game.move_to_location(x, y));// 
+path(except ValueError: );//// //////
+output(print(f"Received: {ser_bytes } " ));// 
+generic(pass);// ////
+bend();//
+generic();//game.command_queue.put(ser_bytes)
+bend();//
+path(except serial.SerialException: );//// //////
+output(print("Serial connection lost, retrying...") );//// //////
+end(break );//// //////
+bend();//
+lend();//
+path(except serial.SerialException as e: );//// //////
+process(ser.close(););//
+output(print(f"Failed to open serial port: {e}") );//// //////
+generic(time.sleep(1) );// ////
+path(except Exception as e: );//// //////
+process(ser.close(););//
+generic(print(f"Unexpected error: {e}") );// ////
+generic(time.sleep(1) );// ////
+bend();//
+lend();//
+end();//
+set(game = CircuitBoard3D());// ////
+
+input(def main(): );// ////
+generic();// // Create and start serial monitor thread //
+generic(serial_thread = threading.Thread(target=serial_monitor, args=(game,), daemon=True) );// ////
+generic(serial_thread.start() );// ////
+process( game.run());// // Run game in main thread //
+end();//
+branch( if __name__ == '__main__': );// #0#
+path(  );//
+set(main(););//
+bend(  );//
+
+
+
+;INSECTA EMBEDDED SESSION INFORMATION
+; 255 16777215 65280 16777088 16711680 255 12632256 0 255 255 65535 65280 5439529
+;    RoboCleaner.py   #   .
+; notepad.exe
+;INSECTA EMBEDDED ALTSESSION INFORMATION
+; 763 224 1776 1504 395 99   1076   4294957915    python.key  0
