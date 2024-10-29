@@ -1,0 +1,108 @@
+;  IRL FlowCode Version: Version 10.0
+;  c1995-2015: Visual Flow Coder by 2LResearch
+;
+;  File Name : DOIT_ESP_MX8266.ino.vfc
+;  File Date : 11:27:02 PM - 28:Oct:2024
+
+event(#include <SPI.h>);//// //////
+event(#include <MFRC522.h>);//// //////
+generic(#define SS_PIN  15);// // D8 //
+generic(#define RST_PIN 2);// // D3 //
+end();//
+set(MFRC522 rfid(SS_PIN, RST_PIN););// ////
+end();//
+set(int  N=16;);//
+event(int UID[ ] = {);//
+branch();//
+path();//
+generic(559,);// ////
+generic(652,);// ////
+generic(735,);// ////
+generic(631,);// ////
+path();//
+generic(577,);// ////
+generic(702,);// ////
+generic(647,);// ////
+generic(889,);// ////
+path();//
+generic(739,);// ////
+generic(621,);// ////
+generic(605,);// ////
+generic(883,);// ////
+path();//
+generic(655,);// ////
+generic(674,);// ////
+generic(551,);// ////
+generic(729,);// ////
+bend();//
+set(0);//
+end( } ;);//
+branch();//
+path();//
+
+input(int _get_Address( int uid ) {);//
+loop(for(int i=0; i<N; i++ ){);//
+branch(if ( uid ==  UID[i] ));//
+path( {);//
+end(return i ;);//
+bend( });//
+lend( });//
+end(return uid  ;  });//
+path();//
+
+input(int get_Address( int uid ) {);//
+set(int    i=0;);//
+loop(while(   UID[ i ] != 0 && i < N ) {);//for(int i=0; i<N; i++ ){
+branch(if ( uid ==  UID[ i ] ));//
+path( {);//
+end(return i   ;);//
+bend( });//
+set(i++;);//
+lend( });//
+end(return uid;  });//
+bend();//
+end();//
+
+input(void setup() {);//// //////
+generic(Serial.begin(9600););// ////
+output(Serial.print("------------STARTING UP spi ------------\n"););//// //////
+generic(SPI.begin(););// // init SPI bus //
+output(Serial.print("------------STARTING UP rfid------------\n"););//// //////
+process(rfid.PCD_Init(););//// // init MFRC522 ////
+output(Serial.println("Tap an RFID/NFC tag on the RFID-RC522 reader"););//// //////
+end(});//// //////
+set(String uidString = " ";);//
+generic(int uid =0 ;);// 
+
+input(void loop() {);//// //////
+generic();// // Serial.println("---> try to read card:"); //
+branch(if (rfid.PICC_IsNewCardPresent()) {);//// // new tag is available ////
+path();//
+branch(if (rfid.PICC_ReadCardSerial()) {);//// // NUID has been readed ////
+path();//
+generic(MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak););// ////
+output(// //////);//Serial.print("RFID/NFC Tag Type: "); 
+output(// //////);//Serial.println(rfid.PICC_GetTypeName(piccType)); 
+generic(uid = 0;);// // print UID in Serial Monitor in the hex format //
+output();//Serial.println("String UID[ ] = { ") ;
+loop(for (int i = 0; i < rfid.uid.size; i++) {);//// //////
+generic( ////);//Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " "); 
+generic( uid += rfid.uid.uidByte[i] ;);// 
+lend(});////// ////////
+generic(rfid.PICC_HaltA(););// // halt PICC //
+generic(rfid.PCD_StopCrypto1(););// // stop encryption on PCD //
+process(uid =  get_Address( uid ) ;);//////
+output(Serial.print( uid ); Serial.println(  "," ););// ////
+bend(});//// //////
+bend(});//// //////
+output(// //////);//Serial.print("."); delay(2000); 
+end(});//// //////
+
+
+
+;INSECTA EMBEDDED SESSION INFORMATION
+; 255 16777215 65280 16777088 16711680 4227327 12615808 0 255 255 16776960 6946660 34
+;    DOIT_ESP_MX8266.ino   //   ;
+; notepad.exe
+;INSECTA EMBEDDED ALTSESSION INFORMATION
+; 1408 628 1327 1309 19 149   478   4294966946    ino.key  0
