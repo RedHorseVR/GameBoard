@@ -1,0 +1,39 @@
+;  IRL FlowCode Version: Version 10.0
+;  c1995-2015: Visual Flow Coder by 2LResearch
+;
+;  File Name : board.scad.vfc
+;  File Date : 03:47:40 PM - 17:Mar:2025
+
+event(include <E:\Users\luisr\OneDrive\Desktop\PROJECTS\SCAD_Modules\modules.scad>);//
+end();//
+set(BX = 120;);//
+set(BY = BX ;);//
+set(BH = 2.5;);//
+
+input(module board( R = 26/2 , t=1.6 ) {);//
+branch(difference(){ );//
+path(union(){ );//
+set(box( BX, BY , BH ););//
+path( } #union(){);//
+set(Dim = 3;);//
+set(SPACING = 6;);//
+generic(S = 2*R+ (Dim*SPACING) / 4 ;);// 
+set(Dx = S ;);//
+loop(for  ( X = [ 0:Dim ]) {);//
+loop(for  ( Y = [ 0:Dim ]) {);//
+process(translate( [ -S - Dx/2  , -S -Dx/2 , 0 ] ));//
+process(translate( [ X*Dx, Y*Dx , BH - t+.01 ] )  cylinder( r = R, h = 5, center=false););//
+lend( } );//
+lend( } );//
+bend(  } } );//
+end( } );//
+process(board ( ););//
+
+
+
+;INSECTA EMBEDDED SESSION INFORMATION
+; 255 16777215 65280 16777088 16711680 13158600 13158600 0 255 255 65535 6946660 394758
+;    board.scad   //   ...
+; notepad.exe
+;INSECTA EMBEDDED ALTSESSION INFORMATION
+; 800 770 940 1066 1 110   356   118    SCAD.key  0

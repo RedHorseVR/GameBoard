@@ -1,0 +1,56 @@
+;  IRL FlowCode Version: Version 10.0
+;  c1995-2015: Visual Flow Coder by 2LResearch
+;
+;  File Name : xiaoESP32C3.ino.vfc
+;  File Date : 01:16:11 PM - 25:Oct:2024
+
+event(#include <SPI.h> );//// //////
+event(#include <MFRC522.h> );//// //////
+generic(#define SS_PIN  15  );// // D8 //
+generic(#define RST_PIN 2   );// // D3 //
+end();//
+set(MFRC522 rfid(SS_PIN, RST_PIN););// ////
+end();//
+
+input(void setup() { );//// //////
+generic(Serial.begin(9600); );// ////
+output(Serial.print("------------STARTING UP spi ------------\n"); );//// //////
+generic(SPI.begin(); );// // init SPI bus //
+output(Serial.print("------------STARTING UP rfid------------\n"); );//// //////
+generic( ////);//MFRC522 rfid(SS_PIN, RST_PIN); 
+generic( ////);//ptr_rfid = &rfid; 
+process(rfid.PCD_Init(); );//// // init MFRC522 ////
+output(Serial.println("Tap an RFID/NFC tag on the RFID-RC522 reader"); );//// //////
+end(} );//// //////
+
+input(void loop() { );//// //////
+generic();// // Serial.println("---> try to read card:"); //
+branch(if (rfid.PICC_IsNewCardPresent()) { );//// // new tag is available ////
+path();//
+branch(if (rfid.PICC_ReadCardSerial()) { );//// // NUID has been readed ////
+path();//
+generic(MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak); );// ////
+generic(Serial.print("RFID/NFC Tag Type: "); );// ////
+generic(Serial.println(rfid.PICC_GetTypeName(piccType)); );// ////
+generic();// // print UID in Serial Monitor in the hex format //
+generic(Serial.print("UID:"); );// ////
+loop(for (int i = 0; i < rfid.uid.size; i++) { );//// //////
+generic(Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " "); );// ////
+generic(Serial.print(rfid.uid.uidByte[i], HEX); );// ////
+lend(} );////// ////////
+output(Serial.println(); );//// //////
+generic(rfid.PICC_HaltA(); );// // halt PICC //
+generic(rfid.PCD_StopCrypto1(); );// // stop encryption on PCD //
+bend(} );//// //////
+bend(} );//// //////
+output(Serial.print("."); delay(2000); );//// //////
+end(});//// //////
+
+
+
+;INSECTA EMBEDDED SESSION INFORMATION
+; 255 16777215 65280 16777088 16711680 13158600 13158600 0 255 255 9895835 6946660 3289650
+;    xiaoESP32C3.ino   //   ;
+; notepad.exe
+;INSECTA EMBEDDED ALTSESSION INFORMATION
+; 2517 173 858 1701 19 99   644   4294967217    ino.key  0
