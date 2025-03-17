@@ -2,10 +2,9 @@
 ;  c1995-2015: Visual Flow Coder by 2LResearch
 ;
 ;  File Name : board.scad.vfc
-;  File Date : 11:28:57 PM - 28:Oct:2024
+;  File Date : 03:47:40 PM - 17:Mar:2025
 
-event(include <E:\Users\luisr\OneDrive\Desktop\SCAD_Modules\modules.scad> );//
-event(include <C:\Users\luisr\OneDrive\Desktop\SCAD_Modules\modules.scad> );//
+event(include <E:\Users\luisr\OneDrive\Desktop\PROJECTS\SCAD_Modules\modules.scad>);//
 end();//
 set(BX = 120;);//
 set(BY = BX ;);//
@@ -37,4 +36,4 @@ process(board ( ););//
 ;    board.scad   //   ...
 ; notepad.exe
 ;INSECTA EMBEDDED ALTSESSION INFORMATION
-; 1804 871 940 1066 7 110   356   118    SCAD.key  0
+; 800 770 940 1066 1 110   356   118    SCAD.key  0

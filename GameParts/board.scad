@@ -1,5 +1,4 @@
-include <E:\Users\luisr\OneDrive\Desktop\SCAD_Modules\modules.scad>
-include <C:\Users\luisr\OneDrive\Desktop\SCAD_Modules\modules.scad>
+include <E:\Users\luisr\OneDrive\Desktop\PROJECTS\SCAD_Modules\modules.scad>
 
 BX = 120;
 BY = BX ;
@@ -24,5 +23,5 @@ module board( R = 26/2 , t=1.6 ) {
 		} }
 	}
 board ( );
-//  Export  Date: 11:28:57 PM - 28:Oct:2024...
+//  Export  Date: 03:47:40 PM - 17:Mar:2025...
 
